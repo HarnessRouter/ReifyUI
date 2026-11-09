@@ -7,7 +7,8 @@ export interface GraphClient {
   putConnect(graphId: string, registry: unknown): Promise<unknown>;
   testConnectTool(graphId: string, tool: string, args: Record<string, unknown>): Promise<unknown>;
   listConnectKeys(graphId: string): Promise<unknown[]>;
-  createConnectKey(graphId: string, name: string): Promise<unknown>;
+  /** `readOnly`: the key may only read; the answer's `read_only` says what was minted. */
+  createConnectKey(graphId: string, name: string, opts?: { readOnly?: boolean }): Promise<unknown>;
   revokeConnectKey(graphId: string, keyId: string): Promise<unknown>;
   fetchAudit(graphId: string, params: { limit?: number; cursor?: string | null; q?: string }): Promise<unknown>;
   /** Absolute URL for a gateway path (the MCP endpoint shown to the user). */

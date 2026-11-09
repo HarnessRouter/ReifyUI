@@ -251,6 +251,14 @@
 .cn-key-meta { font-size: 12px; color: var(--mute); white-space: nowrap; flex-shrink: 0; }
 .cn-key-lbl { color: var(--mute); margin-right: 3px; }
 .cn-key-revoke { flex-shrink: 0; }
+.cn-key-ro { flex-shrink: 0; height: 18px; font-size: 10.5px; padding: 0 6px; }
+.cn-ro-opt {
+  display: flex; align-items: flex-start; gap: 8px; margin-top: 12px;
+  font-size: 13px; color: var(--ink); cursor: pointer;
+}
+.cn-ro-opt input { margin: 2px 0 0; flex-shrink: 0; accent-color: var(--brand); }
+.cn-ro-title { display: block; font-weight: 600; }
+.cn-ro-hint { display: block; margin-top: 2px; font-size: 12px; line-height: 1.55; color: var(--mute); }
 
 /* Secret shown once at mint */
 .cn-secret { padding: 12px 14px; background: var(--pn-code-bg); border-radius: 10px; }
