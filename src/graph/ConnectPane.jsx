@@ -95,6 +95,7 @@ function KeyRow({ k, onRevoke }) {
   return (
     <div className="cn-key-row">
       <span className="cn-key-name" title={k.name}><KeyRound size={13} aria-hidden="true" />{k.name || '—'}</span>
+      {k.read_only && <span className="pill brand cn-key-ro" title="Agents with this key can read but not change anything">Read only</span>}
       <code className="mono cn-key-prefix">{k.prefix ? `${k.prefix}…` : '—'}</code>
       <span className="cn-key-meta">
         <span className="cn-key-lbl">Created</span> {relativeTime(k.created_at) || '—'}
@@ -163,13 +164,14 @@ function ConnectionCard({ url, keys, expanded, onToggle, onCreateKey, onRevoke }
 
 function CreateKeyDialog({ busy, error, onSubmit, onClose }) {
   const [name, setName] = useState('');
+  const [readOnly, setReadOnly] = useState(false);
   const ref = useRef(null);
   useEffect(() => { ref.current?.focus(); }, []);
   const ok = name.trim().length > 0;
   return (
     <Modal open onClose={busy ? undefined : onClose} title="Create API key" width={420} classNames={{ root: 'cn-dlg' }}>
       <div className="cn-dlg-body">Name the key after the agent or place that will use it, so you can tell keys apart later.</div>
-      <form onSubmit={(e) => { e.preventDefault(); if (ok && !busy) onSubmit(name.trim()); }}>
+      <form onSubmit={(e) => { e.preventDefault(); if (ok && !busy) onSubmit(name.trim(), readOnly); }}>
         <input
           ref={ref}
           className="input"
@@ -178,6 +180,13 @@ function CreateKeyDialog({ busy, error, onSubmit, onClose }) {
           placeholder="e.g. claude-desktop"
           maxLength={80}
         />
+        <label className="cn-ro-opt">
+          <input type="checkbox" checked={readOnly} disabled={busy} onChange={(e) => setReadOnly(e.target.checked)} />
+          <span>
+            <span className="cn-ro-title">Read only</span>
+            <span className="cn-ro-hint">Agents with this key can read your data but can&apos;t change or delete anything. This can&apos;t be changed later.</span>
+          </span>
+        </label>
         {error && <div className="cn-err">{error}</div>}
         <div className="cn-dlg-foot">
           <button type="button" className="btn" onClick={onClose} disabled={busy}>Cancel</button>
@@ -195,6 +204,7 @@ function SecretDialog({ secret, onClose }) {
     <Modal open onClose={onClose} title="Your new API key" width={480} classNames={{ root: 'cn-dlg' }}>
       <div className="cn-dlg-body">
         Copy this key now and store it somewhere safe. For your security, it will not be shown again.
+        {secret.read_only && ' This key can only read.'}
       </div>
       <div className="cn-secret">
         <code className="mono">{secret.key}</code>
@@ -513,11 +523,22 @@ export function ConnectPane({ graphId, liveRegistry, client }) {
     }
   };
 
-  const doCreateKey = async (name) => {
+  const doCreateKey = async (name, readOnly) => {
     setCreateBusy(true);
     setCreateError('');
     try {
-      const minted = await client.createConnectKey(graphId, name);
+      const minted = await client.createConnectKey(graphId, name, { readOnly });
+      if (readOnly && minted?.read_only !== true) {
+        // A service from before read-only keys ignores the choice and mints a
+        // key that can write: never hand that out as read-only. Its secret is
+        // never shown, and it is revoked at once.
+        let gone = true;
+        try { await client.revokeConnectKey(graphId, minted.id); } catch { gone = false; }
+        setKeys(await client.listConnectKeys(graphId));
+        throw new Error(gone
+          ? 'Read-only keys aren’t available yet. No key was created.'
+          : `Read-only keys aren’t available yet. Revoke the key “${name}” from the list.`);
+      }
       setCreatingKey(false);
       setSecret(minted);
       setKeys(await client.listConnectKeys(graphId));
