@@ -107,7 +107,8 @@ function FlowchartEl({ el }) {
       if (!src) return;
       try {
         const mermaid = (await import('mermaid')).default || (await import('mermaid'));
-        mermaid.initialize({ startOnLoad: false, theme: 'neutral' });
+        // 'strict' named, not left to mermaid's default: labels are text and click handlers are off (CAT 11-10)
+        mermaid.initialize({ startOnLoad: false, theme: 'neutral', securityLevel: 'strict' });
         const id = 'mmd_' + Math.random().toString(36).slice(2);
         const { svg } = await mermaid.render(id, src);
         if (!dead) setSvg(svg);
