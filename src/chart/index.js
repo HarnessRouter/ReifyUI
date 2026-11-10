@@ -4,6 +4,8 @@
 // dependency graph of every consumer, so an app that renders a Button and no chart would have to
 // resolve a charting library to build. Same rule, same reason, as 'reifyui/slides'.
 export { Chart } from './Chart.jsx';
+// What the chart does to every option before ECharts sees it, for a host that sets options on the instance itself.
+export { safeChartOption, safeHref } from './safe.js';
 // The theme as strings a chart option can hold — series colours, axis ink, tooltip chrome. CSS
 // variables do not reach inside a canvas; these do.
 export { chartTokens } from './tokens.js';
