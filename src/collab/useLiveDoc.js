@@ -14,7 +14,7 @@ import { HocuspocusProvider } from '@hocuspocus/provider';
 import { keepPresenceAlive } from './keepAlive.js';
 
 const REFUSED = 'refused';
-const DISCONNECT_GRACE_MS = 2_000;   // a ticket's planned close re-syncs well inside this
+const DISCONNECT_GRACE_MS = 5_000;   // a ticket's planned close re-syncs well inside this
 
 export function useLiveDoc(resourceId, { fetchTicket, field = 'presence' } = {}) {
   const [doc, setDoc] = useState(null);           // the Y.Doc, once synced
