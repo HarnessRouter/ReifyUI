@@ -55,3 +55,11 @@ export function chartTokens(el?: Element | null): ChartTokens;
 /** chartTokens(), re-read when the theme changes (a class/data-* flip on <html> or <body>, or the
  *  OS preference). Put the returned ref on the element the chart lives in. */
 export function useChartTokens(): [ChartTokens, RefObject<HTMLElement | null>];
+
+/** A copy of an option with what ECharts would write as HTML or open as a URL made inert: every tooltip draws text
+ *  (renderMode 'richText'), a link or sublink is kept only for http(s) or mailto, and the data view's title and labels
+ *  are escaped. Chart applies it to every option; call it yourself before setOption on the instance from onInit. */
+export function safeChartOption<T>(option: T): T;
+/** The value when it is an http(s) or mailto URL, else ''. */
+export function safeHref(value: unknown): string;
+
