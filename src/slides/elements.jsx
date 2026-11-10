@@ -5,6 +5,7 @@
 // about placement. Charts (ECharts) and flowcharts (Mermaid) load lazily and
 // render to SVG so they stay crisp in the canvas, thumbnails, and PDF.
 import { useEffect, useRef, useState } from 'react';
+import { safeChartOption } from '../chart/safe.js';
 
 // A deck can come from anywhere (a save, the copilot, a peer writing the live document), so the renderer itself
 // keeps it inert: a link is a link only when it is http(s) or mailto (React 18 renders a javascript: href), and a
@@ -13,17 +14,11 @@ const SAFE_HREF = /^(https?:\/\/|mailto:)/i;
 export function safeHref(v) {
   return typeof v === 'string' && SAFE_HREF.test(v.replace(/[\u0000-\u0020\u007f]/g, '')) ? v : '';
 }
+// A deck's chart spec goes through the same inert pass as reifyui/chart's options (chart/safe.js): every tooltip at
+// any level (root, baseOption, timeline options, media, series, data) draws text, a link is http(s) or mailto, and the
+// data view's words are escaped. 11-10: the top-level-only pass here left a baseOption tooltip and the data view as HTML.
 export function safeChartSpec(spec) {
-  const out = JSON.parse(JSON.stringify(spec));
-  const walk = (n) => {
-    if (Array.isArray(n)) { n.forEach(walk); return; }
-    if (!n || typeof n !== 'object') return;
-    for (const k of ['link', 'sublink']) if (k in n && !safeHref(n[k])) delete n[k];
-    Object.values(n).forEach(walk);
-  };
-  walk(out);
-  for (const t of [].concat(out.tooltip || [])) if (t && typeof t === 'object') t.renderMode = 'richText';
-  return out;
+  return safeChartOption(spec);
 }
 
 // Rich-text runs → spans with marks. role drives default sizing (the stage is
