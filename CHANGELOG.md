@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.18.4
+
+- `reifyui/chart` keeps an ECharts option inert before ECharts sees it, because an option can be written by an agent or
+  another user. Every tooltip, at any level, draws in the chart itself (`renderMode: 'richText'`), never as HTML. A
+  `link` / `sublink` (a title's, or a sunburst or treemap node's) is kept only for `http(s):` or `mailto:`. The data
+  view's title and labels are escaped. The option you pass in is never changed.
+- **Behaviour change:** a tooltip formatter that returned HTML now shows that HTML as text. Use the formatter's rich
+  text styles (`{a|…}` with `rich`) instead of markup.
+- New `safeChartOption(option)` and `safeHref(value)` from `reifyui/chart`, for a host that calls `setOption` on the
+  instance it got from `onInit`.
+- The same fix is on the maintenance lines as 0.13.13, 0.11.4 and 0.8.6.
+
+## 0.18.3
+
+- The package's repository, homepage and issues links name HarnessRouter/ReifyUI. npm checks a provenance publish
+  against them, so 0.18.2 never reached npm; 0.18.3 is the same code.
+
+## 0.18.2 (tagged, never published)
+
+- `reifyui/slides` keeps a deck inert whatever its source: an embed is the `srcdoc` of a sandboxed frame (no scripts,
+  an opaque origin), a link mark is a link only for `http(s):` or `mailto:`, and a chart element's tooltips draw text.
+  Published as 0.18.3, and on the maintenance lines as 0.13.12, 0.11.3 and 0.8.5.
+
 ## 0.18.1
 
 - Deep Agents' `execute` reads as a shell command: its row shows the command ("Running sleep 8; echo
