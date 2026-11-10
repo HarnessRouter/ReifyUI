@@ -18,13 +18,13 @@
   ],
   "license": "MIT",
   "author": "Epsilla",
-  "homepage": "https://github.com/epsilla-enterprise/ReifyUI#readme",
+  "homepage": "https://github.com/HarnessRouter/ReifyUI#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/epsilla-enterprise/ReifyUI.git"
+    "url": "git+https://github.com/HarnessRouter/ReifyUI.git"
   },
   "bugs": {
-    "url": "https://github.com/epsilla-enterprise/ReifyUI/issues"
+    "url": "https://github.com/HarnessRouter/ReifyUI/issues"
   },
   "type": "module",
   "sideEffects": [
