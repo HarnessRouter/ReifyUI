@@ -11,6 +11,13 @@
 // not in the root index — the same reason `reifyui/slides` is its own entry. An app that imports
 // a Button must not resolve a charting library.
 import { useEffect, useRef, useState } from 'react';
+import { safeChartOption } from './safe.js';
+
+// Every option reaches ECharts through here, made inert first (safe.js): a tooltip draws text, a link is http(s) or
+// mailto, the data view's words are escaped. An option a host sets on the instance it got from onInit is its own.
+export function applyOption(chart, option, notMerge) {
+  chart.setOption(safeChartOption(option), notMerge);
+}
 
 /**
  * option    the ECharts option. Applied whenever the REFERENCE changes, so build it in a
@@ -43,7 +50,7 @@ export function Chart(props) {
         const chart = echarts.init(host.current, null, { renderer });
         inst.current = chart;
         const { option: opt, notMerge: nm, onInit: cb } = latest.current;
-        if (opt) { chart.setOption(opt, nm); applied.current = opt; }
+        if (opt) { applyOption(chart, opt, nm); applied.current = opt; }
         if (cb) cb(chart);
       } catch {
         if (!dead) setFailed(true);          // no chart code: say so, never draw a fake one
@@ -61,7 +68,7 @@ export function Chart(props) {
   // arrives asynchronously, so both paths run on the first render that has one.
   useEffect(() => {
     if (!inst.current || !option || applied.current === option) return;
-    inst.current.setOption(option, notMerge);
+    applyOption(inst.current, option, notMerge);
     applied.current = option;
   }, [option, notMerge]);
 
