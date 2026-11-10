@@ -534,10 +534,14 @@ export function ConnectPane({ graphId, liveRegistry, client }) {
         // never shown, and it is revoked at once.
         let gone = true;
         try { await client.revokeConnectKey(graphId, minted.id); } catch { gone = false; }
-        setKeys(await client.listConnectKeys(graphId));
-        throw new Error(gone
-          ? 'Read-only keys aren’t available yet. No key was created.'
-          : `Read-only keys aren’t available yet. Revoke the key “${name}” from the list.`);
+        const list = await client.listConnectKeys(graphId);
+        setKeys(list);
+        if (gone) throw new Error('Read-only keys aren’t available yet. No key was created.');
+        // A name is not unique: name the row the way the list shows it (its public prefix, else its id), never any
+        // part of the secret, so the person revokes the right key (CAT 11-10).
+        const row = list.find((k) => k.id === minted.id);
+        const mark = row?.prefix ? `${row.prefix}…` : minted.id;
+        throw new Error(`Read-only keys aren’t available yet. Revoke the key “${name}” (${mark}) from the list.`);
       }
       setCreatingKey(false);
       setSecret(minted);
