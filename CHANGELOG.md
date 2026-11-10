@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.18.5
+
+- `reifyui/slides` keeps a deck's chart inert with the same pass as `reifyui/chart` (`safeChartOption`). 0.18.3 forced
+  text tooltips on the top-level `tooltip` only, so a tooltip given only in `baseOption`, a timeline frame (`options`)
+  or a `media` rule, and the data view's title and labels, still reached the page as HTML. Now every tooltip at any
+  level draws text and the data view's words are escaped. The same fix is in 0.13.14, 0.11.5 and 0.8.7.
+- The Connect pane's Create API key dialog offers **Read only** (off by default, fixed when the key is made). A key made
+  read-only shows a Read only tag, and its one-time dialog says it can only read. If the service doesn't return the
+  key as read-only, its secret is never shown: the key is revoked at once and the dialog says read-only keys aren't
+  available; if that revoke fails, it names the key and its listed prefix so the right row can be revoked.
+  `createConnectKey(graphId, name, { readOnly })` is the host's call.
+- The Connect dialogs' body is a padded block in every host (`.cn-dlg .uic-modal-b` in `graph.css`). `graph.css` notes
+  that the config block's styles come from `reifyui/styles/chat.css`.
+- Flowcharts name mermaid's `securityLevel: 'strict'` instead of relying on mermaid's default.
+
 ## 0.18.4
 
 - `reifyui/chart` keeps an ECharts option inert before ECharts sees it, because an option can be written by an agent or
