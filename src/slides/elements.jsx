@@ -6,6 +6,26 @@
 // render to SVG so they stay crisp in the canvas, thumbnails, and PDF.
 import { useEffect, useRef, useState } from 'react';
 
+// A deck can come from anywhere (a save, the copilot, a peer writing the live document), so the renderer itself
+// keeps it inert: a link is a link only when it is http(s) or mailto (React 18 renders a javascript: href), and a
+// chart's tooltip draws text, not HTML (found 2026-11-05).
+const SAFE_HREF = /^(https?:\/\/|mailto:)/i;
+export function safeHref(v) {
+  return typeof v === 'string' && SAFE_HREF.test(v.replace(/[\u0000-\u0020\u007f]/g, '')) ? v : '';
+}
+export function safeChartSpec(spec) {
+  const out = JSON.parse(JSON.stringify(spec));
+  const walk = (n) => {
+    if (Array.isArray(n)) { n.forEach(walk); return; }
+    if (!n || typeof n !== 'object') return;
+    for (const k of ['link', 'sublink']) if (k in n && !safeHref(n[k])) delete n[k];
+    Object.values(n).forEach(walk);
+  };
+  walk(out);
+  for (const t of [].concat(out.tooltip || [])) if (t && typeof t === 'object') t.renderMode = 'richText';
+  return out;
+}
+
 // Rich-text runs → spans with marks. role drives default sizing (the stage is
 // 1920 wide, so these px sizes read correctly once the stage is scaled).
 //
@@ -29,8 +49,8 @@ function runSpans(runs) {
     if (marks.has('italic')) style.fontStyle = 'italic';
     if (marks.has('underline')) style.textDecoration = 'underline';
     if (marks.has('code')) { style.fontFamily = 'var(--sl-mono, monospace)'; style.background = 'rgba(0,0,0,.06)'; style.padding = '0 6px'; style.borderRadius = 4; }
-    const link = (r.marks || []).find((m) => typeof m === 'object' && m.link);
-    if (link) return <a key={i} href={link.link} style={{ ...style, color: 'var(--sl-brand)' }}>{node}</a>;
+    const link = (r.marks || []).find((m) => typeof m === 'object' && safeHref(m.link));
+    if (link) return <a key={i} href={safeHref(link.link)} style={{ ...style, color: 'var(--sl-brand)' }}>{node}</a>;
     return <span key={i} style={style}>{node}</span>;
   });
 }
@@ -70,7 +90,7 @@ function ChartEl({ el }) {
         const echarts = (await import('echarts')).default || (await import('echarts'));
         if (dead || !ref.current) return;
         chart = echarts.init(ref.current, null, { renderer: 'svg' });
-        if (el.content?.spec) chart.setOption(el.content.spec);
+        if (el.content?.spec) chart.setOption(safeChartSpec(el.content.spec));
       } catch { /* echarts missing — leave the box */ }
     })();
     return () => { dead = true; try { chart && chart.dispose(); } catch {} };
@@ -160,9 +180,18 @@ function CodeEl({ el }) {
   );
 }
 
+// An embed's html is a document of its own: the srcdoc of a sandboxed frame (no scripts, an opaque origin) behind
+// a policy that allows no script and no plain-http load. Put straight into the page, its markup ran in the host's
+// origin, where the person's session lives (found 2026-11-05). pointer-events: none keeps the element selectable
+// and draggable in the editor.
+const EMBED_POLICY = '<meta http-equiv="Content-Security-Policy" content="default-src https: data:; '
+  + "style-src 'unsafe-inline' https: data:; script-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'\">"
+  + '<style>html,body{margin:0;padding:0;background:transparent;overflow:hidden}</style>';
+
 function EmbedEl({ el }) {
-  return <div style={{ width: '100%', height: '100%', overflow: 'hidden' }}
-              dangerouslySetInnerHTML={{ __html: el.content?.html || '' }} />;
+  return <iframe title="Embedded content" sandbox="" referrerPolicy="no-referrer"
+                 srcDoc={EMBED_POLICY + (el.content?.html || '')}
+                 style={{ border: 0, width: '100%', height: '100%', display: 'block', pointerEvents: 'none' }} />;
 }
 
 function ph() {
