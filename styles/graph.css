@@ -1,7 +1,10 @@
 /* Graph panes shared by every host (the ContextualGraph app and the studio's
    Spaces): the Connect tab, the Logs tab, their dialogs and skeletons, the
    keep-alive tab panes and the Graph / Connect / Logs switcher. Colors come
-   from the host's design tokens (--ink, --mute, --line, --brand, ...). */
+   from the host's design tokens (--ink, --mute, --line, --brand, ...).
+   The Connect tab's config block is reifyui's CodeBlock, whose rules (.wbx-code)
+   live in reifyui/styles/chat.css: a host loads that sheet too, or the block
+   shows as plain text. */
 
 /* Tokens the panes need that a host may not define: each resolves to the host's
    own value when it has one and to the graph app's value otherwise. */
@@ -259,6 +262,12 @@
 .cn-ro-opt input { margin: 2px 0 0; flex-shrink: 0; accent-color: var(--brand); }
 .cn-ro-title { display: block; font-weight: 600; }
 .cn-ro-hint { display: block; margin-top: 2px; font-size: 12px; line-height: 1.55; color: var(--mute); }
+
+/* The Connect dialogs' body is a padded block in every host, not the modal's default row: a host that never set this
+   drew the Create API key text, input and buttons side by side, flush to the edges (Studio, 11-10). The values are the
+   ContextualGraph app's own. */
+.cn-dlg .uic-modal-b { display: block; padding: 28px 32px 26px; }
+@media (max-width: 440px) { .cn-dlg .uic-modal-b { padding: 22px 20px; } }
 
 /* Secret shown once at mint */
 .cn-secret { padding: 12px 14px; background: var(--pn-code-bg); border-radius: 10px; }
