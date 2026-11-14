@@ -76,6 +76,11 @@
       "import": "./dist/agent-chat.js",
       "require": "./dist/agent-chat.cjs"
     },
+    "./tree": {
+      "types": "./dist/tree.d.ts",
+      "import": "./dist/tree.js",
+      "require": "./dist/tree.cjs"
+    },
     "./styles/*": "./styles/*",
     "./package.json": "./package.json"
   },
@@ -104,6 +109,9 @@
       ],
       "agent-chat": [
         "dist/agent-chat.d.ts"
+      ],
+      "tree": [
+        "dist/tree.d.ts"
       ]
     }
   },

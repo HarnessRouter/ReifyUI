@@ -1,0 +1,199 @@
+/* reifyui/tree: FileTree, a folder tree of files the way an editor's Explorer shows one.
+
+   The look is the HarnessRouter console's skill-editor tree: 30px rows, 14px icons, 14px more
+   indent per level, names in the monospace face, the open file on the surface colour with a
+   hairline, row actions at the right of a row on hover, and a quiet uppercase header label with
+   small icon buttons beside it.
+
+   Token contract. Every colour reads --rui-tree-* first, then the package-wide --uic-* set
+   (themes/light.css, themes/dark.css or a host's own), then a light fallback:
+     --rui-tree-bg           the tree pane                         --uic-surface-2
+     --rui-tree-surface      the selected row, a name being typed  --uic-surface
+     --rui-tree-ink / --rui-tree-mute / --rui-tree-faint   text, strongest to quietest
+     --rui-tree-line         hairlines                             --uic-line
+     --rui-tree-brand        focus, a drop target, the folder in use   --uic-brand
+     --rui-tree-hover        a row under the pointer               --uic-hover-wash
+     --rui-tree-fail / --rui-tree-fail-bg   a refused name, a delete question
+     --rui-tree-mono         names                                 --uic-mono
+   Sizes a host may tune: --rui-tree-row-h (30px), --rui-tree-indent (14px), --rui-tree-font-size
+   (12.5px). The tree fills its box; give the box its size. */
+
+:where(.rui-tree, .rui-tree-menu) {
+  --_pane: var(--rui-tree-bg, var(--uic-surface-2, #F7F8FA));
+  --_surface: var(--rui-tree-surface, var(--uic-surface, #FFFFFF));
+  --_ink: var(--rui-tree-ink, var(--uic-ink, #111317));
+  --_mute: var(--rui-tree-mute, var(--uic-mute, #5B5D66));
+  --_faint: var(--rui-tree-faint, var(--uic-mute-2, #8E9199));
+  --_line: var(--rui-tree-line, var(--uic-line, #DDDFE6));
+  --_brand: var(--rui-tree-brand, var(--uic-brand, #285AFF));
+  --_brand-faint: var(--rui-tree-brand-faint, var(--uic-brand-faint, #EFF3FF));
+  --_ring: var(--uic-focus-ring, rgba(40, 90, 255, .14));
+  --_hover: var(--rui-tree-hover, var(--uic-hover-wash, rgba(0, 0, 0, .05)));
+  --_fail: var(--rui-tree-fail, var(--uic-fail-ink, #B91C1C));
+  --_fail-bg: var(--rui-tree-fail-bg, var(--uic-fail-bg, #FEF2F2));
+  --_mono: var(--rui-tree-mono, var(--uic-mono, ui-monospace, SFMono-Regular, Menlo, monospace));
+  --_skeleton: var(--uic-skeleton, rgba(17, 24, 39, .06));
+  --_shadow: var(--uic-shadow-2, 0 8px 24px -12px rgba(17, 24, 39, .12), 0 2px 6px -2px rgba(17, 24, 39, .06));
+  --_r-menu: var(--uic-r-card, 12px);
+  --_r-row: var(--uic-r-input, 8px);
+  --_z: var(--uic-z-overlay, 9000);
+  --_fs-md: var(--uic-font-md, 14px);
+  --_row: var(--rui-tree-row-h, 30px);
+  --_indent: var(--rui-tree-indent, 14px);
+  --_fs: var(--rui-tree-font-size, 12.5px);
+  /* where a row's text starts past its chevron: the row's own 4px, the 14px chevron, a 4px gap */
+  --_lead: 22px;
+}
+
+.rui-tree-sr { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* ── the pane ────────────────────────────────────────────────────────────────────────────────── */
+.rui-tree {
+  display: flex; flex-direction: column; min-width: 0; min-height: 0; height: 100%; box-sizing: border-box;
+  background: var(--_pane); color: var(--_mute); font-size: var(--_fs);
+}
+
+/* the header: the title and, beside it, the tree's own actions */
+.rui-tree-head { flex: none; display: flex; align-items: center; gap: 2px; min-width: 0; padding: 8px 8px 6px 12px; }
+.rui-tree-title {
+  flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--_mute);
+}
+.rui-tree-tools { flex: none; display: flex; align-items: center; gap: 2px; }
+.rui-tree-tool {
+  display: grid; place-items: center; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 6px;
+  background: transparent; color: var(--_faint); cursor: pointer;
+}
+.rui-tree-tool:hover { background: var(--_hover); color: var(--_ink); }
+.rui-tree-tool:focus-visible { outline: 2px solid var(--_brand); outline-offset: -2px; color: var(--_ink); }
+.rui-tree-tool:disabled { opacity: .45; cursor: default; background: transparent; }
+
+.rui-tree-body {
+  flex: 1; min-height: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain;
+  padding: 0 6px 6px; box-sizing: border-box;
+}
+/* the top of the tree as a drop target */
+.rui-tree-body.is-drop { background: var(--_brand-faint); box-shadow: inset 0 0 0 1px var(--_brand); }
+
+.rui-tree-list, .rui-tree-group { list-style: none; margin: 0; padding: 0; }
+.rui-tree-item { position: relative; outline: none; border-radius: var(--_r-row); }
+/* a folder a dragged row would land in: the folder and everything in it, its outline drawn over
+   the rows inside it (the selected one paints its own surface) */
+.rui-tree-item.is-drop { background: var(--_brand-faint); }
+.rui-tree-item.is-drop::after {
+  content: ""; position: absolute; inset: 0; z-index: 1; border-radius: inherit; pointer-events: none;
+  box-shadow: inset 0 0 0 1px var(--_brand);
+}
+.rui-tree-item.is-drop > .rui-tree-row { color: var(--_brand); }
+.rui-tree-row.is-dragging { opacity: .5; }
+
+/* ── a row ───────────────────────────────────────────────────────────────────────────────────── */
+.rui-tree-row {
+  position: relative; display: flex; align-items: center; gap: 4px; min-width: 0; min-height: var(--_row);
+  padding: 0 2px 0 calc(4px + var(--rui-tree-d, 0) * var(--_indent)); box-sizing: border-box;
+  border-radius: var(--_r-row); line-height: 1.4; color: var(--_mute); cursor: default; user-select: none;
+  -webkit-user-select: none;
+}
+.rui-tree-row:hover { background: var(--_hover); }
+.rui-tree-row.is-menu { background: var(--_hover); }
+.rui-tree-row.is-selected { background: var(--_surface); box-shadow: inset 0 0 0 1px var(--_line); color: var(--_ink); }
+.rui-tree-row.is-target, .rui-tree-row.is-target .rui-tree-icon { color: var(--_brand); }
+.rui-tree-item:focus-visible > .rui-tree-row { outline: 2px solid var(--_brand); outline-offset: -2px; }
+
+.rui-tree-twisty { flex: none; width: 14px; height: 14px; display: grid; place-items: center; color: var(--_faint); }
+.rui-tree-twisty svg { transition: transform .15s; }
+.rui-tree-twisty.is-open svg { transform: rotate(90deg); }
+.rui-tree-icon { flex: none; display: grid; place-items: center; color: var(--_faint); }
+
+/* a long name is cut at the end, its extension kept whole; the full path is the row's title */
+.rui-tree-name { flex: 0 1 auto; min-width: 0; display: flex; overflow: hidden; white-space: nowrap; font-family: var(--_mono); font-size: var(--_fs); }
+.rui-tree-base { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.rui-tree-ext { flex: none; }
+.rui-tree-note, .rui-tree-tag { flex: none; margin-left: 6px; font-size: 11px; color: var(--_faint); white-space: nowrap; }
+
+/* the row's actions: at its right, shown on hover, on the selected row and on the focused row.
+   Out of the layout until then, so a narrow tree gives an idle row its whole name. */
+.rui-tree-acts { flex: none; display: none; margin-left: auto; padding-left: 4px; }
+.rui-tree-row:hover .rui-tree-acts, .rui-tree-row.is-selected .rui-tree-acts,
+.rui-tree-item:focus-visible > .rui-tree-row .rui-tree-acts { display: flex; }
+.rui-tree-ib {
+  display: grid; place-items: center; width: 26px; height: 26px; padding: 0; border: 0; border-radius: 6px;
+  background: transparent; color: var(--_faint); cursor: pointer;
+}
+.rui-tree-ib:hover { background: var(--_hover); color: var(--_ink); }
+.rui-tree-ib:disabled { opacity: .45; cursor: default; }
+
+/* a row with a save of its own in flight */
+.rui-tree-row.is-pending .rui-tree-name { opacity: .6; }
+.rui-tree-spin {
+  flex: none; width: 12px; height: 12px; margin: 0 8px 0 auto; box-sizing: border-box; border-radius: 50%;
+  border: 1.5px solid var(--_line); border-top-color: var(--_brand); animation: rui-tree-spin .8s linear infinite;
+}
+@keyframes rui-tree-spin { to { transform: rotate(360deg); } }
+
+/* ── a name being typed (New file, New folder, Rename) ───────────────────────────────────────── */
+.rui-tree-input {
+  flex: 1; min-width: 0; width: auto; margin: 2px 4px 2px 0; padding: 3px 7px; box-sizing: border-box;
+  border: 1px solid var(--_brand); border-radius: 6px; background: var(--_surface); color: var(--_ink);
+  font-family: var(--_mono); font-size: var(--_fs); line-height: 1.4; outline: none; box-shadow: 0 0 0 3px var(--_ring);
+  user-select: text; -webkit-user-select: text;
+}
+.rui-tree-input[aria-invalid="true"] { border-color: var(--_fail); box-shadow: none; }
+.rui-tree-input[readonly] { opacity: .7; }
+
+/* ── messages and the delete question, under their row ───────────────────────────────────────── */
+.rui-tree-msg {
+  margin: 2px 6px 6px calc(var(--_lead) + var(--rui-tree-d, 0) * var(--_indent));
+  font-size: 12px; line-height: 1.4; color: var(--_fail); overflow-wrap: anywhere;
+}
+.rui-tree-msg.is-tree { margin: 0 12px 6px; }
+.rui-tree-ask {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px;
+  margin: 2px 0 6px calc(var(--_lead) + var(--rui-tree-d, 0) * var(--_indent)); padding: 8px 10px;
+  border-radius: var(--_r-row); background: var(--_fail-bg); font-size: 12.5px; line-height: 1.4; color: var(--_ink);
+  overflow-wrap: anywhere;
+}
+.rui-tree-ask-q { min-width: 0; }
+.rui-tree-ask-b { display: flex; gap: 14px; margin-left: auto; }
+.rui-tree-link { padding: 2px 0; border: 0; background: none; font: inherit; font-weight: 600; color: var(--_brand); cursor: pointer; }
+.rui-tree-link.is-danger { color: var(--_fail); }
+.rui-tree-link:focus-visible { outline: 2px solid var(--_brand); outline-offset: 2px; border-radius: 4px; }
+.rui-tree-link:disabled { opacity: .5; cursor: default; }
+
+.rui-tree-empty { margin: 8px 6px; font-size: 13px; line-height: 1.4; color: var(--_faint); }
+.rui-tree-skel { display: block; padding-top: 2px; }
+.rui-tree-skel-line { display: block; height: 11px; margin: 9px 0 9px var(--_lead); border-radius: 4px; background: var(--_skeleton); animation: rui-tree-pulse 1.5s ease-in-out infinite; }
+@keyframes rui-tree-pulse { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
+
+/* ── the row's menu (in document.body; its colours come with it from the tree) ───────────────── */
+.rui-tree-menu {
+  position: fixed; z-index: var(--_z); box-sizing: border-box; min-width: 220px; max-width: calc(100vw - 16px);
+  padding: 6px; background: var(--_surface); border: 1px solid var(--_line); border-radius: var(--_r-menu);
+  box-shadow: var(--_shadow); color: var(--_ink);
+}
+.rui-tree-menu-item {
+  display: flex; align-items: center; gap: 10px; width: 100%; min-height: 34px; padding: 6px 10px; box-sizing: border-box;
+  border: 0; border-radius: var(--_r-row); background: transparent; color: inherit;
+  font: inherit; font-size: var(--_fs-md); font-weight: 500; line-height: 1.3; text-align: left; cursor: pointer;
+}
+/* opened by the pointer, the first item takes focus without looking chosen; from the keyboard it shows */
+.rui-tree-menu-item:focus { outline: none; }
+.rui-tree-menu-item:hover, .rui-tree-menu-item:focus-visible { background: var(--_hover); }
+.rui-tree-menu-item:disabled { opacity: .5; cursor: default; background: transparent; }
+.rui-tree-menu-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rui-tree-menu-hint { flex: none; padding-left: 10px; font: inherit; font-size: 12px; font-weight: 400; color: var(--_faint); }
+.rui-tree-menu-sep { height: 1px; margin: 4px 6px; background: var(--_line); }
+
+/* ── touch: actions always shown, rows and buttons a finger wide, a field that does not zoom ─── */
+@media (hover: none) { .rui-tree-acts { display: flex; } }
+@media (pointer: coarse) {
+  .rui-tree-row { min-height: 38px; }
+  .rui-tree-tool { width: 34px; height: 34px; }
+  .rui-tree-ib { width: 34px; height: 34px; }
+  .rui-tree-input { font-size: 16px; }
+  .rui-tree-menu-item { min-height: 40px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rui-tree-twisty svg { transition: none; }
+  .rui-tree-spin, .rui-tree-skel-line { animation: none; }
+}
