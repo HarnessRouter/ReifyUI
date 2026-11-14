@@ -62,6 +62,7 @@ A production-grade surface for rendering and interacting with a live agent turn:
 | **Slides** (`reifyui/slides`) | `SlideView`, `SlideStage`, `EditorCanvas`, `Presentation`, `ElementView`, `themeVars` — render a JSON deck, edit it by direct manipulation, present it |
 | **Spreadsheet** | `SheetGrid`, `sheetToDelimited`, `sheetToAoA` — an AI-editable grid, extensible with your own column types |
 | **HarnessRouter** (`reifyui/harness`) | `configureKit`, `kitHarness`, `listSessions`, `readFile`, `writeFile`, `createResponse`, `streamTurn`, `turnsToMessages`, `fileToInputBlock` — the transport for apps served by a HarnessRouter console |
+| **File tree** (`reifyui/tree`) | `FileTree`, `buildFileTree`, `treeKeyAction`, `nameProblem`, `canMove` — a folder tree of files the way an editor's Explorer shows one: names typed in place, a delete asked in the row, drag into a folder, a right-click menu, the WAI-ARIA tree keyboard |
 | **Agent chat** (`reifyui/agent-chat`) | `AgentConversation`, `AgentTurnView`, `AgentComposer`, `WorkingIndicator`, `StepRow`, `WorkGroup`, `TodoCard`, `reduceTurn`, `turnFromMessage`, `describeTool`, `motionFor` — an agent's turn the way Claude Code shows it: one live line, work folded to a past-tense line per run of calls, every call one click from its input and output |
 | **Icons / tool meta** | `Ic*` icon set, `toolMeta`, `humanize`, `summarizeSteps` |
 | **Auth (optional)** | `configureAuth`, `login`, `AuthForm`, `GoogleButton` — a thin JWT client for products with a `/v1/auth`-style backend; wired to nothing by default |
@@ -157,6 +158,7 @@ import 'reifyui/styles/panels.css';        // panel + panel grid, stat tile, res
 import 'reifyui/styles/tasks.css';         // task list
 import 'reifyui/styles/dialog.css';        // alert / confirm / prompt dialogs
 import 'reifyui/styles/agent-chat.css';    // reifyui/agent-chat: the agent conversation
+import 'reifyui/styles/tree.css';          // reifyui/tree: the file tree
 ```
 
 Themes are CSS-variable files — load one, or switch at runtime by toggling which you apply. Override
@@ -230,6 +232,47 @@ tool vocabulary (Claude Code, Codex, Gemini CLI, Hermes, Goose, OpenCode, OpenHa
 into a kind, a target, lines added and removed, and the plan; a browser call reads as what it did ("Clicked the “About” link"). `openStep(item, d)` lets the host open a call in a place of its own (a browser step opens the live browser beside the conversation) instead of unfolding it. The package ships the motions, never
 the logos: pass your mark as a node and `motionFor(base)` names a motion, or none for three dots.
 All motion stops under `prefers-reduced-motion`.
+
+## File tree
+
+`reifyui/tree` is a folder tree of files the way an editor's Explorer shows one. It draws a flat
+list of paths (folders are implied by the files in them; a `dir` entry keeps an empty one) and
+reports what the person did; your list changes and comes back in.
+
+```jsx
+import { FileTree } from 'reifyui/tree';
+import 'reifyui/styles/tree.css';
+
+<FileTree
+  title="Snippets"
+  entries={[{ path: 'tasks/refund', kind: 'file' }, { path: 'drafts', kind: 'dir' }]}
+  selected={open} onSelect={(path, kind) => kind === 'file' && setOpen(path)}
+  labels={{ newFile: 'New snippet', newFileInput: 'Name of the new snippet' }}
+  onCreate={({ path, kind }) => api.create(path, kind)}          // a returned string is shown under the name
+  onRename={({ from, to }) => api.rename(from, to)}
+  onDelete={({ path, kind }) => api.remove(path, kind)}
+  onMove={({ from, toDir }) => api.move(from, toDir)}
+  onUpload={(dir) => pickFilesInto(dir)}                         // your own file picker
+  validateName={(name) => (name.length > 64 ? 'Use 64 characters or fewer.' : '')}
+  menuItems={[{ id: 'include', label: 'Copy include line', when: (p, kind) => kind === 'file',
+                onSelect: (p) => copy(`{{template "${p}" .}}`) }]}
+/>
+```
+
+The header holds the title and, beside it, New file, New folder, Upload and Collapse all (only the
+ones whose handler you pass; `actions` picks fewer). New file and New folder open a name field in the
+folder in use: Enter keeps it, Escape puts it away, leaving the field keeps a valid name. `''`, `.`,
+`..`, a slash and a name already in that folder are refused before `validateName` is asked. F2 or the
+row's pencil renames in place; Delete asks in the row ("Delete tasks and the 3 files in it?"); a row
+drags into another folder or the top, never into itself. A right click, Shift+F10 or the menu key
+opens the row's menu. Arrow keys, Home and End move; Right and Left open, close and step in and out.
+A handler may return a message, or a Promise of one, to refuse: it shows where the person acted.
+
+`open` + `onOpenChange` control the open folders (`defaultOpen` otherwise: every folder, or a list).
+`readOnly` draws the tree with nothing to change. `busy`, `pending` (paths with a save in flight),
+`rowErrors` and `error` show what the host is doing. Every word is in `labels`. The model it runs on
+(`buildFileTree`, `visibleRows`, `treeKeyAction`, `nameProblem`, `canMove`) needs no React, so a
+host can check a name or a move by the same rules. Colours come from `--uic-*` (or `--rui-tree-*`).
 
 ## Slides
 

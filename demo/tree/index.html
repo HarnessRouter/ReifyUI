@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FileTree</title>
+<link rel="stylesheet" href="../../styles/themes/light.css">
+<link rel="stylesheet" href="../../styles/themes/dark.css">
+<link rel="stylesheet" href="../../styles/tree.css">
+<style>
+  /* the page around the tree: a stand-in for the console's Snippets tab, nothing the package ships */
+  html, body { margin: 0; }
+  body { background: var(--uic-surface); color: var(--uic-ink); font-family: var(--uic-font); }
+  main { max-width: 880px; margin: 0 auto; padding: 48px 24px; box-sizing: border-box; }
+  h1 { margin: 0 0 24px; font-size: 28px; letter-spacing: -.01em; }
+  .plate { display: grid; grid-template-columns: minmax(180px, 32%) minmax(0, 1fr); height: 340px;
+    border: 1px solid var(--uic-line); border-radius: 14px; overflow: hidden; background: var(--uic-surface); }
+  .tree-pane { min-width: 0; min-height: 0; border-right: 1px solid var(--uic-line); }
+  .editor { min-width: 0; display: flex; flex-direction: column; }
+  .editor-top { display: flex; align-items: center; gap: 12px; min-height: 46px; padding: 0 14px; border-bottom: 1px solid var(--uic-line); }
+  .editor-path { flex: 1; min-width: 0; font-family: var(--uic-mono); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .save { border: 0; border-radius: 999px; padding: 6px 12px; background: var(--uic-brand); color: var(--uic-on-brand); font: inherit; font-size: 13px; font-weight: 600; }
+  .editor-body { flex: 1; overflow: auto; padding: 14px 0; font-family: var(--uic-mono); font-size: 13px; line-height: 1.6; color: var(--uic-ink-2); }
+  .ln { display: grid; grid-template-columns: 34px minmax(0, 1fr); }
+  .ln span { text-align: right; padding-right: 12px; color: var(--uic-mute-2); }
+  .ln code { font: inherit; white-space: pre-wrap; overflow-wrap: anywhere; padding-right: 14px; }
+  .editor-none { margin: auto; padding: 40px; text-align: center; color: var(--uic-mute); font-family: var(--uic-font); }
+  @media (max-width: 700px) {
+    main { padding: 24px 16px; }
+    .plate { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto; height: auto; }
+    .tree-pane { height: 250px; border-right: 0; border-bottom: 1px solid var(--uic-line); }
+    .editor-body { height: 220px; flex: none; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>FileTree</h1>
+  <div id="root"></div>
+</main>
+<script src="out/demo.js"></script>
+</body>
+</html>

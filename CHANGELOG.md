@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.19.0 (unreleased)
+
+- New `reifyui/tree`: `FileTree`, a folder tree of files the way an editor's Explorer shows one, for
+  any list of paths (snippets, a skill's files, an environment's files, a task's files). Folders come
+  from the files in them, or from a `dir` entry for an empty one; folders first, then names.
+  - The header: a quiet title with New file, New folder, Upload and Collapse all beside it, in the
+    tree's own pane. Each shows only when its handler is given; `actions` picks fewer.
+  - New file / New folder open a name field in the folder in use (Enter keeps it, Escape puts it
+    away, leaving the field keeps a valid name). `''`, `.`, `..`, a slash, an invisible character
+    and a name already there (in any case) are refused, then the host's `validateName`.
+  - Rename in place (F2, the row's pencil, the menu); Delete asks in the row, and for a folder says
+    how many files go with it; drag a row into another folder or the top, never into itself or a
+    folder inside it, with the folder it would land in outlined.
+  - A row's menu on a right click, Shift+F10 or the menu key: New file, New folder, Rename, the
+    host's `menuItems`, Delete. Escape, a press outside, a scroll or a choice closes it.
+  - The WAI-ARIA tree pattern: `tree` / `treeitem` / `group` with `aria-level`, `aria-expanded`,
+    `aria-selected` and one tab stop; arrows, Home, End, Enter and Space. Escape in the tree puts
+    away only the tree's own field, question or menu, never a dialog around it.
+  - `onCreate`, `onRename`, `onDelete` and `onMove` may return a message, or a Promise of one, to
+    refuse; it shows where the person acted. `busy`, `pending`, `rowErrors` and `error` for the
+    host's own states; `readOnly` for a tree nothing changes in. Every word is in `labels`.
+  - The model without React: `buildFileTree`, `visibleRows`, `treeKeyAction`, `nameProblem`,
+    `canMove` and path helpers. Styles in `reifyui/styles/tree.css`, on the `--uic-*` tokens (light
+    and dark) or `--rui-tree-*`; at a phone's width a long name is cut with its extension kept.
+
 ## 0.18.5
 
 - `reifyui/slides` keeps a deck's chart inert with the same pass as `reifyui/chart` (`safeChartOption`). 0.18.3 forced
