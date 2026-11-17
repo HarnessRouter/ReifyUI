@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.19.0 (unreleased)
+## 0.19.0
 
 - New `reifyui/tree`: `FileTree`, a folder tree of files the way an editor's Explorer shows one, for
   any list of paths (snippets, a skill's files, an environment's files, a task's files). Folders come
