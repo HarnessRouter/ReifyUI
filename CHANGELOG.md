@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.19.1
+
+- The auth client sends the engine's person check (Cloudflare Turnstile) on the three doors that send mail, and
+  says a refusal instead of hiding it. The engine now requires the check on password reset and resending the
+  confirmation email as well as sign-up, so a script can't make it mail real people.
+  - `register`, `requestPasswordReset` and the new `resendVerification` get a token for their own door right before
+    the request (`personToken(door, engine)`, also exported). The site key comes from the engine
+    (`GET <engine>/v1/auth/person-check`), so a product sets nothing at build time; with none set, no widget runs
+    and no token is sent.
+  - The widget is Cloudflare's managed mode, shown only when Cloudflare asks the person to do something, in the
+    form's `[data-person-check]` slot (`AuthForm` carries one in its reset and sign-up forms).
+  - `requestPasswordReset` and `resendVerification` now read the answer: a refusal (the person check, a domain that
+    takes no mail) throws the engine's own sentence, so `AuthForm` shows it rather than "a reset link is on its
+    way" with no mail coming. The answer still never says whether the address has an account.
+  - The page's host must be in the engine's `TURNSTILE_HOSTNAMES` and in the widget's own hostnames.
+
 ## 0.19.0
 
 - New `reifyui/tree`: `FileTree`, a folder tree of files the way an editor's Explorer shows one, for

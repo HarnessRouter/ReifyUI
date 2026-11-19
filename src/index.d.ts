@@ -513,7 +513,13 @@ export function isAuthed(): boolean;
 export function login(email: string, password: string): Promise<unknown>;
 export function register(payload: Record<string, unknown>): Promise<unknown>;
 export function googleSignIn(credential: string, extra?: Record<string, unknown>): Promise<unknown>;
-export function requestPasswordReset(email: string): Promise<unknown>;
+/** Throws with words for the person when the engine refused (the person check, a domain that takes no mail). */
+export function requestPasswordReset(email: string): Promise<void>;
+/** Send the confirmation email again; throws as requestPasswordReset does. */
+export function resendVerification(email: string): Promise<void>;
+/** A fresh person-check token for one of the engine's mail doors, or '' when the engine sets no site key. */
+export function personToken(door: 'register' | 'reset' | 'resend', engine: string): Promise<string>;
+export const PERSON_CHECK_FAILED: string;
 export function switchOrg(orgId: string): Promise<unknown>;
 export function refreshToken(): Promise<unknown>;
 export function handleAuthExpired(): void;

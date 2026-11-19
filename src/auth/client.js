@@ -11,6 +11,8 @@
 // call order (configure first) is the only contract.
 /* eslint-env browser */
 
+import { personToken } from './personCheck.js';
+
 const _cfg = {
   // Same-origin. A product that forgets to configure gets the working default rather than the
   // engine's Azure FQDN, which no browser may call — its ingress admits only the VM that fronts
@@ -97,7 +99,8 @@ export async function login(email, password) {
 }
 
 export async function register(email, password, name = '') {
-  const s = toSession(await authPost('/v1/auth/register', { email, password, name, product: _cfg.product }));
+  const turnstile_token = await personToken('register', _cfg.engine);
+  const s = toSession(await authPost('/v1/auth/register', { email, password, name, product: _cfg.product, turnstile_token }));
   setSession(s);
   return s;
 }
@@ -117,12 +120,39 @@ export async function microsoftSignIn(credential) {
   return s;
 }
 
-export async function requestPasswordReset(email) {
-  await fetch(`${_cfg.engine}/v1/auth/request-password-reset`, {
+// A reset or resend refusal in the person's words: the engine's own sentence for a check it refused
+// (the person check, an address whose domain takes no mail), else the general one. Neither says
+// whether the address has an account: the engine answers 200 for one it doesn't know.
+async function readMailDoorError(res) {
+  if (res.status === 400 || res.status === 403 || res.status === 503) {
+    try {
+      const d = (await res.json())?.detail;
+      if (typeof d === 'string' && d.length > 0 && d.length < 200) return d;
+    } catch { /* not JSON */ }
+  }
+  return 'We could not send the request. Please try again later.';
+}
+
+async function mailDoor(path, door, email) {
+  const turnstile_token = await personToken(door, _cfg.engine);
+  const res = await fetch(`${_cfg.engine}${path}`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ email, product: _cfg.product }),
+    body: JSON.stringify({ email, product: _cfg.product, turnstile_token }),
   });
+  // a refusal is said, never shown as "check your email" with no mail coming
+  if (!res.ok) throw new Error(await readMailDoorError(res));
+}
+
+/** Ask for a password reset link. Resolves when the engine took the request (it answers the same
+ *  whether or not the address has an account); throws with words for the person when it refused. */
+export async function requestPasswordReset(email) {
+  await mailDoor('/v1/auth/request-password-reset', 'reset', email);
+}
+
+/** Send the confirmation email again, as requestPasswordReset does. */
+export async function resendVerification(email) {
+  await mailDoor('/v1/auth/resend-verification', 'resend', email);
 }
 
 /** Re-mint an org-scoped token for the chosen org. */

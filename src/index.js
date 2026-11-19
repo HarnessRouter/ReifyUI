@@ -38,9 +38,10 @@ export { DialogHost, useDialog } from './components/Dialog.jsx';
 export {
   configureAuth, authConfig, SESSION_EVENT,
   getSession, clearSession, getToken, isAuthed,
-  login, register, googleSignIn, microsoftSignIn, requestPasswordReset, switchOrg,
+  login, register, googleSignIn, microsoftSignIn, requestPasswordReset, resendVerification, switchOrg,
   refreshToken, handleAuthExpired, logout, authFetch, fetchBalance,
 } from './auth/client.js';
+export { personToken, PERSON_CHECK_FAILED } from './auth/personCheck.js';
 export { AuthForm } from './auth/AuthForm.jsx';
 export { GoogleButton, GOOGLE_ENABLED } from './auth/GoogleButton.jsx';
 export { MicrosoftButton, MICROSOFT_ENABLED, microsoftIdToken } from './auth/MicrosoftButton.jsx';

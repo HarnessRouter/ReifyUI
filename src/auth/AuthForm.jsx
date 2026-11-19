@@ -140,6 +140,7 @@ export function AuthForm({ onDone, subtitle, brand = null, productName = '' }) {
               <label>Email</label>
               <input className="input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoFocus required autoComplete="email" />
             </div>
+            <div data-person-check="" className="person-check" />
             {err && <div className="auth-err">{err}</div>}
             <button type="submit" className="btn primary lg" style={{ width: '100%', marginTop: 8 }} disabled={busy}>
               {busy ? 'Please wait...' : 'Send reset link'}
@@ -180,6 +181,7 @@ export function AuthForm({ onDone, subtitle, brand = null, productName = '' }) {
               placeholder={mode === 'register' ? 'At least 8 characters' : ''}
             />
           </div>
+          {mode === 'register' && <div data-person-check="" className="person-check" />}
           {err && <div className="auth-err">{err}</div>}
           <button type="submit" className="btn primary lg" style={{ width: '100%', marginTop: 8 }} disabled={busy}>
             {busy ? 'Please wait...' : mode === 'register' ? 'Create account' : 'Sign in'}
